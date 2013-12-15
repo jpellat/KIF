@@ -155,28 +155,35 @@
 
 - (void)tapAccessibilityElement:(UIAccessibilityElement *)element inView:(UIView *)view
 {
-    [self runBlock:^KIFTestStepResult(NSError **error) {
-        
-        KIFTestWaitCondition(view.isUserInteractionActuallyEnabled, error, @"View is not enabled for interaction");
-        
-        // If the accessibilityFrame is not set, fallback to the view frame.
-        CGRect elementFrame;
-        if (CGRectEqualToRect(CGRectZero, element.accessibilityFrame)) {
-            elementFrame.origin = CGPointZero;
-            elementFrame.size = view.frame.size;
-        } else {
-            elementFrame = [view.windowOrIdentityWindow convertRect:element.accessibilityFrame toView:view];
-        }
-        CGPoint tappablePointInElement = [view tappablePointInRect:elementFrame];
-        
-        // This is mostly redundant of the test in _accessibilityElementWithLabel:
-        KIFTestWaitCondition(!isnan(tappablePointInElement.x), error, @"View is not tappable");
-        [view tapAtPoint:tappablePointInElement];
-        
-        KIFTestCondition(![view canBecomeFirstResponder] || [view isDescendantOfFirstResponder], error, @"Failed to make the view into the first responder");
-        
-        return KIFTestStepResultSuccess;
-    }];
+    [self tapAccessibilityElement:element inView:view times:1];
+}
+
+- (void)tapAccessibilityElement:(UIAccessibilityElement *)element inView:(UIView *)view times:(NSUInteger)times
+{
+    for (int i = 0; i < times; i++) {
+        [self runBlock:^KIFTestStepResult(NSError **error) {
+            
+            KIFTestWaitCondition(view.isUserInteractionActuallyEnabled, error, @"View is not enabled for interaction");
+            
+            // If the accessibilityFrame is not set, fallback to the view frame.
+            CGRect elementFrame;
+            if (CGRectEqualToRect(CGRectZero, element.accessibilityFrame)) {
+                elementFrame.origin = CGPointZero;
+                elementFrame.size = view.frame.size;
+            } else {
+                elementFrame = [view.windowOrIdentityWindow convertRect:element.accessibilityFrame toView:view];
+            }
+            CGPoint tappablePointInElement = [view tappablePointInRect:elementFrame];
+            
+            // This is mostly redundant of the test in _accessibilityElementWithLabel:
+            KIFTestWaitCondition(!isnan(tappablePointInElement.x), error, @"View is not tappable");
+            [view tapAtPoint:tappablePointInElement];
+            
+            KIFTestCondition(![view canBecomeFirstResponder] || [view isDescendantOfFirstResponder], error, @"Failed to make the view into the first responder");
+            
+            return KIFTestStepResultSuccess;
+        }];
+    }
     
     // Wait for the view to stabilize.
     [self waitForTimeInterval:0.5];
